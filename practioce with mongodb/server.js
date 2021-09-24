@@ -10,12 +10,6 @@ app.listen(3000, function () {
   console.log("listening on 3000");
 });
 
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + "/index.html");
-});
-app.post("/quotes", (req, res) => {
-  console.log(req.body);
-});
 MongoClient.connect(
   connectionString,
   {
@@ -25,13 +19,36 @@ MongoClient.connect(
     if (err) return console.error(err);
     console.log("Connected to Database");
     const db = client.db("tutorial");
-    app.post("/quotes", (req, res) => {
-      quotesCollection
-        .insertOne(req.body)
+    const userCollection = db.collection("user");
+    app.get("/create", (req, res) => {
+      res.render("index.ejs");
+    });
+    app.get("/", (req, res) => {
+      userCollection
+        .find()
+        .toArray()
         .then((result) => {
           console.log(result);
-        })
-        .catch((error) => console.error(error));
+          res.send(result);
+        });
+    });
+    app.post("/user", (req, res) => {
+      userCollection.insertOne(req.body, update, options).then((result) => {
+        console.log(result);
+        res.send("update new user");
+      });
+    });
+    app.put("/user", (req, res) => {
+      userCollection.findOneAndUpdate(
+        { name: "hoang" },
+        {
+          $set: {
+            name: req.body.name,
+            quote: req.body.quote,
+          },
+        },
+        options
+      );
     });
   }
 );
